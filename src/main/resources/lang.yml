@@ -1,0 +1,15 @@
+prefix: "&a[&b山之击杀&a]&r"
+reload: "%prefix% 配置文件重载成功"
+open: "%prefix% 已开启获得金币提示"
+false: "%prefix% 已关闭获得金币提示"
+noPermission: "%prefix% 你没有权限执行此命令"
+noConsole: "%prefix% 此命令只能由玩家执行"
+help:
+  - "&a&m------------------&r"
+  - "&a/&bmmoney tip &f&l开启/关闭获得金币提示"
+  - "&a&m------------------&r"
+opHelp:
+  - "&a&m------------------&r"
+  - "&a/&bmmoney tip &f&l开启/关闭获得金币提示"
+  - "&a/&bmmoney reload &f&l重载配置文件"
+  - "&a&m------------------&r"

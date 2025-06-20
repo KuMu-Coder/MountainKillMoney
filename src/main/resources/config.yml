@@ -1,0 +1,44 @@
+#调试模式
+debug: false
+#配置文件
+#击杀提示
+killTip: "%prefix% &a你击杀怪物%mob%,获得了&e%money%&a杀币"
+LimitTip: "&%prefix% c你已达到击杀上限&e%limit%&c,无法获得更多杀币"
+#定时器配置
+#多少秒存储一次玩家数据
+playerDataSave: 20
+#多少秒检测一次时间
+timeCheck: 10
+#权限限制
+permLimit:
+  #默认每日击杀配置
+  #完整结构为mountainkill.default 以此类推
+  mountainkill:
+    #默认权限(不可删除)
+    default:
+      #优先级
+      priority: 1
+      #击杀上限
+      kill: 100
+      #奖励配置
+      money:
+        #此处一定要填大写 否则不识别
+        #两种写法都可以
+        #第一种写法
+        ZOMBIE:
+          min: 20
+          max: 100
+        #第二种写法 30为最低 100为最高
+        SKELETON: [30,100]
+    #自定义后缀 完整结构为mountainkill.vip1 以此类推
+    vip1:
+      #优先级(当玩家拥有多个权限时 则应用优先级最高的权限配置)
+      priority: 2
+      #击杀上限
+      kill: 200
+      #奖励配置
+      money:
+        #ALL则为所有怪物
+        ALL:
+          min: 500
+          max: 1000

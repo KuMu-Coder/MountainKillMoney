@@ -1,0 +1,16 @@
+name: MountainKillMoney
+version: '1.0-SNAPSHOT'
+main: qq3643203568.mountainKillMoney.MountainKillMoney
+api-version: '1.20'
+depend:
+  - Vault
+commands:
+  mkmoney:
+    aliases:
+      - mkm
+      - mmoney
+      - killmoney
+      - kmoney
+permissions:
+  mountainkill.default:
+    default: true
