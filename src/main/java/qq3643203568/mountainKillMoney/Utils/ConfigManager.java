@@ -1,5 +1,7 @@
 package qq3643203568.mountainKillMoney.Utils;
 
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.configuration.ConfigurationSection;
@@ -19,16 +21,15 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ConfigManager {
 
     private final JavaPlugin plugin;
-    private File playerData;
+    private final File playerData;
     private final KillMoneyManager killMoney;
-    public String KillTip = "";
-    public String LimitTip = "";
-    private File config;
-    private File lang;
-    private Map<String,String> langMap = new HashMap<>();
-    private Map<UUID,Boolean> tipMap = new HashMap<>();
-    public Integer dateTimer = 0;
-    public Integer playerDataTimer = 0;
+    private final File config;
+    private final File lang;
+    public Map<String,String> langMap = new HashMap<>();
+    private final Map<UUID,Boolean> tipMap = new HashMap<>();
+    private final Map<String,Boolean> tipModeMap = new HashMap<>();
+    private final Map<String,Integer> titleMap = new HashMap<>();
+    public Integer dateTimer;
 
     public ConfigManager(MountainKillMoney plugin,KillMoneyManager killMoney){
         this.plugin = plugin;
@@ -99,6 +100,17 @@ public class ConfigManager {
             return;
         }
 
+        //存储提示模式开关
+        tipModeMap.clear();
+        ConfigurationSection tipModeSection = yaml1.getConfigurationSection("MessageTip");
+        if (tipModeSection == null) {
+            plugin.getLogger().severe("配置文件中未找到 MessageTip 节点！");
+            return;
+        }
+        for (String key : tipModeSection.getKeys(false)){
+            tipModeMap.put(key,tipModeSection.getBoolean(key));
+        }
+
         //将玩家数据存储到Map中
         ConfigurationSection playerDataSection = yaml.getConfigurationSection("PlayerData");
         KillMoneyManager.PlayerKillMoneyMap.clear();
@@ -109,20 +121,30 @@ public class ConfigManager {
                 playerDataMap.put(UUID.fromString(key),playerDataSection.getInt(key));
                 KillMoneyManager.PlayerKillMoneyMap= playerDataMap;
             }
-            plugin.getLogger().info("已成功存储玩家数据到Map中");
         }
         //读取定时器所需参数
-        dateTimer = yaml1.getInt("timeCheck",30);
-        playerDataTimer = yaml1.getInt("playerDataSave",20);
+        dateTimer = yaml1.getInt("timeCheck",20*20);
         //存储日期到文件中
         String date = yaml.getString("Time");
         if (date != null){
             KillMoneyManager.date = date;
             plugin.getLogger().info("日期已加载");
         }
-        KillTip = yaml1.getString("KillTip","%prefix%&a你击杀怪物%mob%,获得了&e%money%&a杀币").replace("&","§").replaceAll("%prefix%",getPrefix());
-        LimitTip = yaml1.getString("LimitTip","%prefix%&c你已达到今日击杀上限").replaceAll("&","§").replaceAll("%prefix%",getPrefix());
+        String KillTip = yaml1.getString("KillTip","%prefix%&a你击杀怪物%mob%,获得了&e%money%&a杀币").replace("&","§").replaceAll("%prefix%",getPrefix());
+        String LimitTip = yaml1.getString("LimitTip","%prefix%&c你已达到今日击杀上限").replaceAll("&","§").replaceAll("%prefix%",getPrefix());
 
+        langMap.put("KillTip",KillTip);
+        langMap.put("LimitTip",LimitTip);
+        //存储标题配置
+        titleMap.clear();
+        ConfigurationSection titleSection = yaml1.getConfigurationSection("TitleConfig");
+        if (titleSection == null) {
+            plugin.getLogger().severe("配置文件中未找到 TitleConfig 节点！");
+            return;
+        }
+        for (String key : titleSection.getKeys(false)){
+            titleMap.put(key,titleSection.getInt(key));
+        }
         //判断config是否包含permLimit节点
         if (!yaml1.contains("permLimit")) {
             plugin.getLogger().severe("配置文件中未找到 permLimit 节点！");
@@ -206,13 +228,27 @@ public class ConfigManager {
         return r.transactionSuccess();
     }
     //发送提示
-    public void sendTip(Player player, Entity entity,double money){
+    public void sendTip(Player player, Entity entity,double money,Map<String,Object> cfg){
         String mobName = entity.getName();
-        player.sendMessage(KillTip.replace("%mob%",mobName).replace("%money%",String.valueOf(money)));
+        String killAmount = String.valueOf(killMoney.getKillAmount(player.getUniqueId())+1);
+        String maxAmount = String.valueOf((int) cfg.get("kill"));
+        String msg = langMap.get("KillTip").replace("%mob%",mobName).replace("%money%",String.valueOf(money)).replace("%nowkill%",killAmount).replace("%maxkill%",maxAmount).replaceAll("%prefix%",getPrefix());
+        if (tipModeMap.get("Chat")){
+            player.sendMessage(msg);
+        }
+        if (tipModeMap.get("Title")){
+            int fadeIn = titleMap.get("fadeIn");
+            int stay = titleMap.get("stay");
+            int fadeOut = titleMap.get("fadeOut");
+            player.sendTitle(msg,"",fadeIn,stay,fadeOut);
+        }
+        if (tipModeMap.get("ActionBar")){
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(msg));
+        }
     }
     //获取前缀
     public String getPrefix(){
-        return plugin.getConfig().getString("prefix","&a[&b山之击杀&a]&r").replaceAll("&","§");
+        return langMap.getOrDefault("prefix","&c未找到前缀").replaceAll("&","§");
     }
 
     //获取提示
@@ -263,5 +299,33 @@ public class ConfigManager {
     public void saveDate(String date){
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(playerData);
         yaml.set("Time",date);
+        try {
+            yaml.save(playerData);
+        }catch (Exception e){
+            plugin.getLogger().severe("存储日期失败");
+        }
+    }
+    //读取debug模式
+    public boolean getDebug(){
+        return plugin.getConfig().getBoolean("debug",false);
+    }
+    //清空玩家数据
+    public void clearPlayerData(){
+        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(playerData);
+        ConfigurationSection playerDataSection = yaml.getConfigurationSection("PlayerData");
+        if (playerDataSection!= null){
+            for (String key : playerDataSection.getKeys(false)){
+                if (key == null) continue;
+                Map<UUID, Integer> playerDataMap = new ConcurrentHashMap<>();
+                yaml.set("PlayerData."+key,0);
+                playerDataMap.put(UUID.fromString(key),0);
+                KillMoneyManager.PlayerKillMoneyMap= playerDataMap;
+            }
+            try {
+                yaml.save(playerData);
+            }catch (Exception e){
+                plugin.getLogger().info("清空玩家数据失败");
+            }
+        }
     }
 }

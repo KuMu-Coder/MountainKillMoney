@@ -11,10 +11,7 @@ import qq3643203568.mountainKillMoney.Model.KillMoneyManager;
 import qq3643203568.mountainKillMoney.MountainKillMoney;
 import qq3643203568.mountainKillMoney.Utils.ConfigManager;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 public class PlayerKillMobsListener implements Listener {
     private final ConfigManager config;
@@ -35,6 +32,9 @@ public class PlayerKillMobsListener implements Listener {
         if (player != null) {
             //获取怪物类型
             Entity mobType = event.getEntity();
+            if (config.getDebug()){
+                plugin.getLogger().info("玩家：" + player.getName() + " 击杀了：" + mobType.getType().name());
+            }
             //获取玩家权限组
             List<String> permlist = getPlayerPerm(player);
             if (permlist.isEmpty()) return;
@@ -42,8 +42,14 @@ public class PlayerKillMobsListener implements Listener {
             Map<String,Object> cfg = getHighestConfig(permlist);
             if (cfg == null) return;
             if (isLimit(player,cfg)) return;
+            if (config.getDebug()){
+                plugin.getLogger().info("玩家：" + player.getName() + " 的最高奖励配置为：" + cfg);
+            }
             //给予奖励
             giveReward(player,cfg,mobType);
+            if (config.getDebug()){
+                plugin.getLogger().info("玩家：" + player.getName() + " 获得了：" + cfg.get("money"));
+            }
         }
     }
     //根据优先级获取最高奖励配置
@@ -74,6 +80,9 @@ public class PlayerKillMobsListener implements Listener {
                 permList.add(perm.getPermission().toLowerCase());
             }
         }
+        if (config.getDebug()){
+            plugin.getLogger().info("玩家：" + player.getName() + " 的权限组为：" + permList);
+        }
         return permList;
     }
     //给予奖励
@@ -90,9 +99,10 @@ public class PlayerKillMobsListener implements Listener {
 
             config.giveMoney(player,money1);
             if (config.getTipState(player.getUniqueId())){
-                config.sendTip(player,mobtype,money1);
+                config.sendTip(player,mobtype,money1,cfg);
             }
             killMoneyManager.setKillAmount(player.getUniqueId());
+            config.savePlayerData(player.getUniqueId(),killMoneyManager.getKillAmount(player.getUniqueId()));
         }
     }
     //判断是否达到击杀上限
@@ -100,9 +110,9 @@ public class PlayerKillMobsListener implements Listener {
         //true则为到达上限 false则为未到达上限
         int limit = killMoneyManager.getKillAmount(player.getUniqueId());
         int sl = (int) cfg.get("kill");
-        if (limit > sl){
+        if (limit >= sl){
             if (config.getTipState(player.getUniqueId())){
-                player.sendMessage(config.LimitTip.replace("%limit%",String.valueOf(sl)));
+                player.sendMessage(config.langMap.get("LimitTip").replace("%limit%",String.valueOf(sl)));
             }
             return true;
         }

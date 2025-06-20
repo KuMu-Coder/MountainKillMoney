@@ -20,32 +20,27 @@ public final class MountainKillMoney extends JavaPlugin {
     @Override
     public void onEnable() {
         //初始化经济系统
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (!setupEconomy()) {
-                    getLogger().severe("未找到Vault或Vault未启用");
-                    getServer().getPluginManager().disablePlugin(MountainKillMoney.this);
-                    return;
-                }
+        if (!setupEconomy()) {
+            getLogger().severe("未找到Vault或Vault未启用");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
 
-                killMoneyManager = new KillMoneyManager("");
-                config = new ConfigManager(MountainKillMoney.this, killMoneyManager);
-                //加载配置文件
-                config.loadConfig();
-                //初始化配置文件
-                config.initConfig();
-                //注册事件
-                getServer().getPluginManager().registerEvents(new PlayerKillMobsListener(config, killMoneyManager, MountainKillMoney.this), MountainKillMoney.this);
-                //注册命令
-                getCommand("mkmoney").setExecutor(new MKillMoneyCommand(config));
-                //加载定时器
-                checkTimerTask = new CheckTimerTask(MountainKillMoney.this,config);
-                //加载提示
-                getLogger().info("山之击杀已加载");
-                getLogger().info("作者QQ：3643203568");
-            }
-        }.runTask(this);
+        killMoneyManager = new KillMoneyManager("");
+        config = new ConfigManager(this, killMoneyManager);
+        //加载配置文件
+        config.loadConfig();
+        //初始化配置文件
+        config.initConfig();
+        //注册事件
+        getServer().getPluginManager().registerEvents(new PlayerKillMobsListener(config, killMoneyManager, this), this);
+        //注册命令
+        getCommand("mkmoney").setExecutor(new MKillMoneyCommand(config));
+        //加载定时器
+        checkTimerTask = new CheckTimerTask(this, config);
+        //加载提示
+        getLogger().info("山之击杀已加载");
+        getLogger().info("作者QQ：3643203568");
     }
 
     @Override

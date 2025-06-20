@@ -2,13 +2,29 @@
 debug: false
 #配置文件
 #击杀提示
-killTip: "%prefix% &a你击杀怪物%mob%,获得了&e%money%&a杀币"
-LimitTip: "&%prefix% c你已达到击杀上限&e%limit%&c,无法获得更多杀币"
+KillTip: "%prefix% &a你击杀怪物%mob%,获得了&e%money%&a杀币,今日上限%nowkill%-%maxkill%"
+LimitTip: "%prefix% &c你已达到击杀上限&e%limit%&c,无法获得更多杀币"
+#信息提示开关
+MessageTip:
+  #聊天栏提示
+  Chat: true
+  #ActionBar提示
+  ActionBar: true
+  #Title
+  Title: true
+#Title参数配置
+TitleConfig:
+  #Tick为单位 1秒=20Tick
+  #淡入时间
+  fadeIn: 20
+  #显示时间
+  stay: 70
+  #淡出时间
+  fadeOut: 20
+
 #定时器配置
-#多少秒存储一次玩家数据
-playerDataSave: 20
 #多少秒检测一次时间
-timeCheck: 10
+timeCheck: 60
 #权限限制
 permLimit:
   #默认每日击杀配置
